@@ -10,7 +10,15 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"
+  region = var.aws_region
+}
+
+locals {
+  common_tags = {
+    Environment = "Development"
+    ManagedBy   = "Terraform"
+    Project     = "Terraform Learning"
+  }
 }
 
 data "aws_ami" "ubuntu" {
@@ -31,9 +39,12 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro"
+  instance_type = var.instance_type
 
-  tags = {
-    Name = "terraform-demo-instance-v2"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = var.instance_name
+    }
+  )
 }

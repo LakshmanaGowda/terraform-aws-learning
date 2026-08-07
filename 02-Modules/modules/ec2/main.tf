@@ -16,30 +16,29 @@ data "aws_ami" "ubuntu" {
 
 locals {
   common_tags = {
-    Environment = "Development"
+    Environment = terraform.workspace
     ManagedBy   = "Terraform"
     Project     = "Terraform Modules Learning"
   }
 }
 
 resource "aws_security_group" "web_sg" {
-  name        = "${var.instance_name}-sg"
+  name        = "${terraform.workspace}-${var.instance_name}-sg"
   description = "Security Group for ${var.instance_name}"
 
-  ingress {
-    description = "Allow SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  dynamic "ingress" {
+    for_each = var.ingress_ports
 
-  ingress {
-    description = "Allow HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    content {
+      description = "Allow Port ${ingress.value}"
+
+      from_port = ingress.value
+      to_port   = ingress.value
+
+      protocol = "tcp"
+
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   egress {
@@ -53,7 +52,7 @@ resource "aws_security_group" "web_sg" {
   tags = merge(
     local.common_tags,
     {
-      Name = "${var.instance_name}-sg"
+      Name = "${terraform.workspace}-${var.instance_name}-sg"
     }
   )
 }
@@ -66,22 +65,7 @@ resource "aws_instance" "web" {
   tags = merge(
     local.common_tags,
     {
-      Name = var.instance_name
+      Name = "${terraform.workspace}-${var.instance_name}"
     }
   )
-}
-
-output "instance_id" {
-  description = "EC2 Instance ID"
-  value       = aws_instance.web.id
-}
-
-output "public_ip" {
-  description = "Public IP"
-  value       = aws_instance.web.public_ip
-}
-
-output "public_dns" {
-  description = "Public DNS"
-  value       = aws_instance.web.public_dns
 }

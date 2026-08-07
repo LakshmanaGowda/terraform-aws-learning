@@ -7,6 +7,12 @@ terraform {
   }
 
   required_version = ">= 1.15.0"
+
+  backend "s3" {
+    bucket = "terraform-state-lakshmana-ap-south-1"
+    key    = "02-Modules/terraform.tfstate"
+    region = "ap-south-1"
+  }
 }
 
 provider "aws" {
@@ -18,6 +24,7 @@ module "web_server" {
 
   instance_name = "web-server"
   instance_type = "t2.micro"
+  ingress_ports = [22, 80, 443]
 }
 
 module "api_server" {
@@ -25,4 +32,5 @@ module "api_server" {
 
   instance_name = "api-server"
   instance_type = "t2.micro"
+  ingress_ports = [22, 5000]
 }
